@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Colour Match Challenge</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #f4f7ff, #eefcf8);
+      min-height: 100vh;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      color: #1f2937;
+    }
+
+    .game-container {
+      width: 90%;
+      max-width: 600px;
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.10);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 30px;
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #6366f1;
+      width: 25%;
+      transition: width 0.4s ease;
+    }
+
+    .question-number {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    .question {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 25px;
+    }
+
+    .colour-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .colour-button {
+      height: 100px;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .colour-button:hover {
+      transform: scale(1.04);
+    }
+
+    .feedback {
+      min-height: 30px;
+      margin-top: 22px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .correct {
+      color: #16a34a;
+    }
+
+    .wrong {
+      color: #dc2626;
+    }
+
+    .results {
+      display: none;
+    }
+
+    .score {
+      font-size: 54px;
+      font-weight: bold;
+      color: #6366f1;
+      margin: 25px 0 10px;
+    }
+
+    .restart-button {
+      margin-top: 25px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .restart-button:hover {
+      background: #4f46e5;
+    }
+
+    @media (max-width: 500px) {
+      .game-container {
+        padding: 25px;
+      }
+
+      .colour-button {
+        height: 80px;
+      }
+    }
+  </style>
+</head>
+
+
+<body>
+
+<div class="game-container">
+
+  <!-- GAME SCREEN -->
+  <div id="game">
+
+    <h1>🎨 Colour Match Challenge</h1>
+
+    <div class="subtitle">
+      Can you identify the correct colour?
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progress"></div>
+    </div>
+
+    <div class="question-number" id="questionNumber">
+      Question 1 of 4
+    </div>
+
+    <div class="question" id="question">
+      Which colour is RED?
+    </div>
+
+    <div class="colour-options" id="options">
+    </div>
+
+    <div class="feedback" id="feedback">
+    </div>
+
+  </div>
+
+
+  <!-- RESULTS SCREEN -->
+  <div class="results" id="results">
+
+    <h1>🎉 Challenge Complete!</h1>
+
+    <div>Your final score:</div>
+
+    <div class="score" id="finalScore">
+      4 / 4
+    </div>
+
+    <div id="finalMessage"></div>
+
+    <button
+      class="restart-button"
+      onclick="restartGame()">
+      Play Again
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  // -------------------------
+  // QUESTIONS
+  // -------------------------
+
+  const questions = [
+
+    {
+      question: "Which colour is RED?",
+      answer: "red",
+      options: [
+        "#ef4444",
+        "#3b82f6",
+        "#22c55e",
+        "#facc15"
+      ]
+    },
+
+    {
+      question: "Which colour is BLUE?",
+      answer: "blue",
+      options: [
+        "#a855f7",
+        "#f97316",
+        "#3b82f6",
+        "#22c55e"
+      ]
+    },
+
+    {
+      question: "Which colour is GREEN?",
+      answer: "green",
+      options: [
+        "#f43f5e",
+        "#22c55e",
+        "#8b5cf6",
+        "#facc15"
+      ]
+    },
+
+    {
+      question: "Which colour is YELLOW?",
+      answer: "yellow",
+      options: [
+        "#06b6d4",
+        "#ef4444",
+        "#facc15",
+        "#6366f1"
+      ]
+    }
+
+  ];
+
+
+  const colourNames = {
+    "#ef4444": "red",
+    "#3b82f6": "blue",
+    "#22c55e": "green",
+    "#facc15": "yellow",
+    "#a855f7": "purple",
+    "#f97316": "orange",
+    "#f43f5e": "pink",
+    "#8b5cf6": "purple",
+    "#06b6d4": "cyan",
+    "#6366f1": "indigo"
+  };
+
+
+  let currentQuestion = 0;
+  let score = 0;
+  let answered = false;
+
+
+  // -------------------------
+  // LOAD QUESTION
+  // -------------------------
+
+  function loadQuestion() {
+
+    answered = false;
+
+    const q = questions[currentQuestion];
+
+    document.getElementById("questionNumber").innerText =
+      `Question ${currentQuestion + 1} of ${questions.length}`;
+
+    document.getElementById("question").innerText =
+      q.question;
+
+    document.getElementById("feedback").innerText = "";
+
+    document.getElementById("progress").style.width =
+      `${((currentQuestion + 1) / questions.length) * 100}%`;
+
+    const optionsContainer =
+      document.getElementById("options");
+
+    optionsContainer.innerHTML = "";
+
+
+    q.options.forEach(colour => {
+
+      const button =
+        document.createElement("button");
+
+      button.className = "colour-button";
+
+      button.style.backgroundColor = colour;
+
+      button.setAttribute(
+        "aria-label",
+        colourNames[colour]
+      );
+
+      button.onclick = () =>
+        checkAnswer(colour);
+
+      optionsContainer.appendChild(button);
+
+    });
+
+  }
+
+
+  // -------------------------
+  // CHECK ANSWER
+  // -------------------------
+
+  function checkAnswer(colour) {
+
+    if (answered) return;
+
+    answered = true;
+
+    const selectedColour =
+      colourNames[colour];
+
+    const correctAnswer =
+      questions[currentQuestion].answer;
+
+    const feedback =
+      document.getElementById("feedback");
+
+
+    if (selectedColour === correctAnswer) {
+
+      score++;
+
+      feedback.innerText =
+        "✅ Correct!";
+
+      feedback.className =
+        "feedback correct";
+
+    } else {
+
+      feedback.innerText =
+        "❌ Not quite!";
+
+      feedback.className =
+        "feedback wrong";
+
+    }
+
+
+    setTimeout(() => {
+
+      currentQuestion++;
+
+      if (currentQuestion < questions.length) {
+
+        loadQuestion();
+
+      } else {
+
+        showResults();
+
+      }
+
+    }, 900);
+
+  }
+
+
+  // -------------------------
+  // RESULTS
+  // -------------------------
+
+  function showResults() {
+
+    document.getElementById("game").style.display =
+      "none";
+
+    document.getElementById("results").style.display =
+      "block";
+
+    document.getElementById("finalScore").innerText =
+      `${score} / ${questions.length}`;
+
+
+    let message = "";
+
+    if (score === 4) {
+
+      message =
+        "🏆 Perfect! You're a Colour Master!";
+
+    } else if (score >= 3) {
+
+      message =
+        "🌟 Great job!";
+
+    } else if (score >= 2) {
+
+      message =
+        "👍 Nice try!";
+
+    } else {
+
+      message =
+        "🎨 Keep practising!";
+
+    }
+
+
+    document.getElementById("finalMessage").innerText =
+      message;
+
+  }
+
+
+  // -------------------------
+  // RESTART
+  // -------------------------
+
+  function restartGame() {
+
+    currentQuestion = 0;
+    score = 0;
+
+    document.getElementById("game").style.display =
+      "block";
+
+    document.getElementById("results").style.display =
+      "none";
+
+    loadQuestion();
+
+  }
+
+
+  // Start game
+
+  loadQuestion();
+
+</script>
+
+</body>
+</html>
